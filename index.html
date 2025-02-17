@@ -57,14 +57,12 @@
 
         // Crear una textura para aplicar la imagen de la cámara como fondo
         const videoTexture = new THREE.VideoTexture(video);
-        const backgroundGeometry = new THREE.PlaneGeometry(2, 2);
-        const backgroundMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
-        const background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-        background.position.z = -1; // Coloca el fondo detrás de la escena
-        scene.add(background);
-
-        // Ajustar la escala del fondo para que ocupe toda la pantalla
-        background.scale.set(window.innerWidth / 500, window.innerHeight / 500, 1);
+        
+        // Crear una esfera gigante para que sea el fondo
+        const sphereGeometry = new THREE.SphereGeometry(500, 60, 40); // Grande para cubrir toda la pantalla
+        const sphereMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.BackSide }); // Invierte la esfera para verla desde dentro
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
 
       } catch (error) {
         console.error('Error al acceder a la cámara:', error);

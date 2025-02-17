@@ -39,18 +39,43 @@
     controls.dampingFactor = 0.1;
     controls.rotateSpeed = 0.5;
 
-    // Crear un fondo dinámico (una esfera gigante detrás de la cámara)
-    const geometry = new THREE.SphereGeometry(1000, 60, 40);
-    geometry.scale(-1, 1, 1); // Volteamos la esfera para que el interior sea el visible
-    const material = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide }); // Fondo negro
-    const backgroundSphere = new THREE.Mesh(geometry, material);
-    scene.add(backgroundSphere);
+    // Función para acceder a la cámara trasera del dispositivo
+    async function setCameraBackground() {
+      try {
+        const constraints = {
+          video: {
+            facingMode: "environment", // Usa la cámara trasera
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
+
+        // Crear una textura para aplicar la imagen de la cámara como fondo
+        const videoTexture = new THREE.VideoTexture(video);
+        const backgroundGeometry = new THREE.PlaneGeometry(2, 2);
+        const backgroundMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
+        const background = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+        background.position.z = -1; // Coloca el fondo detrás de la escena
+        scene.add(background);
+
+      } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+      }
+    }
+
+    // Llamamos a la función para configurar el fondo con la cámara
+    setCameraBackground();
 
     // Cargar el modelo GLB
     const loader = new THREE.GLTFLoader();
     loader.load('a1.glb', function (gltf) {
       const model = gltf.scene;
-      
+
       // Ajustar escala y posición si es necesario
       model.scale.set(0.5, 0.5, 0.5); // Ajusta este valor según tu modelo
       model.position.set(0, -0.5, 0);
@@ -66,7 +91,7 @@
           node.material.needsUpdate = true;
         }
       });
-      
+
       // Mostrar en la consola para verificar la carga del modelo
       console.log('Modelo cargado:', gltf);
     }, undefined, function (error) {

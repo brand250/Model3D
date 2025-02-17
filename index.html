@@ -85,9 +85,16 @@
       // Verificar los materiales de cada malla
       model.traverse((node) => {
         if (node.isMesh) {
-          // Si el mesh no tiene textura asignada, se le asigna un material básico
-          if (!node.material.map) {
-            node.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+          // Si el modelo tiene texturas, estas se aplican automáticamente
+          if (node.material.map) {
+            node.material = new THREE.MeshStandardMaterial({
+              map: node.material.map, // Mantener la textura original
+              roughness: 0.5,         // Puedes ajustar el roughness si lo deseas
+              metalness: 0.5          // Puedes ajustar el metalness si lo deseas
+            });
+          } else {
+            // Si no hay textura, asignar un color básico
+            node.material = new THREE.MeshStandardMaterial({ color: 0x888888 });
           }
           node.material.needsUpdate = true;
         }
@@ -109,7 +116,9 @@
 
     // Ajustar el tamaño al cambiar la ventana
     window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
+      const aspect = window.innerWidth / window.innerHeight;
+      camera.aspect = aspect;
+      camera.fov = 75 * (window.innerWidth / window.innerHeight);
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });

@@ -63,6 +63,9 @@
         background.position.z = -1; // Coloca el fondo detrás de la escena
         scene.add(background);
 
+        // Ajustar la escala del fondo para que ocupe toda la pantalla
+        background.scale.set(window.innerWidth / 500, window.innerHeight / 500, 1);
+
       } catch (error) {
         console.error('Error al acceder a la cámara:', error);
       }

@@ -57,7 +57,7 @@
 
         // Crear una textura para aplicar la imagen de la cámara como fondo
         const videoTexture = new THREE.VideoTexture(video);
-        
+
         // Crear una esfera gigante para que sea el fondo
         const sphereGeometry = new THREE.SphereGeometry(500, 60, 40); // Grande para cubrir toda la pantalla
         const sphereMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.BackSide }); // Invierte la esfera para verla desde dentro

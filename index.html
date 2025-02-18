@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor de Modelo GLB</title>
+  <title>Visor de Modelo OBJ con Textura y Fondo de Cámara</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/OBJLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
@@ -24,22 +24,19 @@
     // Configurar el renderizador
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputEncoding = THREE.sRGBEncoding;
     document.body.appendChild(renderer.domElement);
 
-    // Agregar luces a la escena
+    // Agregar luces
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     directionalLight.position.set(5, 5, 5);
     scene.add(ambientLight, directionalLight);
 
-    // Agregar controles de órbita para mover la cámara
+    // Agregar controles de órbita
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
-    controls.rotateSpeed = 0.5;
 
-    // Función para acceder a la cámara trasera del dispositivo
+    // Función para usar la cámara trasera del dispositivo como fondo
     async function setCameraBackground() {
       try {
         const constraints = {
@@ -55,11 +52,14 @@
         video.srcObject = stream;
         video.play();
 
-        // Crear una textura para aplicar la imagen de la cámara como fondo
+        // Crear textura de video para el fondo
         const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
 
-        // Crear un cubo gigante para que sea el fondo
-        const cubeGeometry = new THREE.BoxGeometry(500, 500, 500); // Ajustar tamaño del cubo
+        // Crear un cubo gigante con la textura de la cámara
+        const cubeGeometry = new THREE.BoxGeometry(500, 500, 500);
         const cubeMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.BackSide });
         const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         scene.add(cube);
@@ -69,44 +69,38 @@
       }
     }
 
-    // Llamamos a la función para configurar el fondo con la cámara
+    // Llamamos a la función para establecer el fondo con la cámara
     setCameraBackground();
 
-    // Cargar el modelo GLB
-    const loader = new THREE.GLTFLoader();
-    loader.load('a1.glb', function (gltf) {
-      const model = gltf.scene;
+    // Cargar la textura
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('shaded.png'); // Ruta correcta a la textura
 
-      // Ajustar escala y posición si es necesario
-      model.scale.set(0.5, 0.5, 0.5); // Ajusta este valor según tu modelo
-      model.position.set(0, -0.5, 0);
-      scene.add(model);
+    // Cargar el modelo OBJ
+    const objLoader = new THREE.OBJLoader();
+    objLoader.load('base.obj', function (obj) {
+      obj.scale.set(0.5, 0.5, 0.5); // Ajusta la escala si es necesario
+      obj.position.set(0, -0.5, 0);
 
-      // Verificar los materiales de cada malla
-      model.traverse((node) => {
+      // Aplicar la textura a cada malla del modelo
+      obj.traverse((node) => {
         if (node.isMesh) {
-          // Si el modelo tiene texturas, estas se aplican automáticamente
-          if (node.material.map) {
-            node.material = new THREE.MeshStandardMaterial({
-              map: node.material.map, // Mantener la textura original
-              roughness: 0.5,         // Puedes ajustar el roughness si lo deseas
-              metalness: 0.5          // Puedes ajustar el metalness si lo deseas
-            });
-          } else {
-            // Si no hay textura, asignar un color básico
-            node.material = new THREE.MeshStandardMaterial({ color: 0x888888 });
-          }
+          node.material = new THREE.MeshStandardMaterial({
+            map: texture, // Aplica la textura cargada
+            roughness: 0.5,
+            metalness: 0.5
+          });
           node.material.needsUpdate = true;
         }
       });
 
-      // Mostrar en la consola para verificar la carga del modelo
-      console.log('Modelo cargado:', gltf);
+      scene.add(obj);
+      console.log('Modelo OBJ cargado:', obj);
     }, undefined, function (error) {
-      console.error('Error al cargar el modelo:', error);
+      console.error('Error al cargar el modelo OBJ:', error);
     });
 
-    // Función de animación
+    // Animación
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
@@ -116,9 +110,7 @@
 
     // Ajustar el tamaño al cambiar la ventana
     window.addEventListener('resize', () => {
-      const aspect = window.innerWidth / window.innerHeight;
-      camera.aspect = aspect;
-      camera.fov = 75 * (window.innerWidth / window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
